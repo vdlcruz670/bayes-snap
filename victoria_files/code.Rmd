@@ -1,0 +1,75 @@
+---
+title: "code"
+author: "Victoria DelaCruz"
+date: "2024-11-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+ 
+# Libraries
+```{r}
+library(tidycensus)
+library(bayesrules)
+library(tidyverse)
+```
+
+# Tidycensus
+```{r}
+v16 <- load_variables(2016, "acs5", cache = TRUE)
+v16
+```
+
+```{r}
+snap_2023 <- get_acs(
+  geography = "state", 
+  table = "B22001", 
+  survey = "acs1",
+  year = 2023,
+  output = "wide"
+)
+```
+```{r}
+hi_snap_2020_acs5 <-get_acs(
+  geography = "county",
+  state = "Hawaii",
+  variables = c(medinc = "B19013_001",
+                medage = "B01002_001"),
+  year = 2020
+)
+```
+```{r}
+snap_2023 <- get_acs(
+  geography = "state",
+  state = "Hawaii",
+  table = "S2201", 
+  survey = "acs1",
+  year = 2023
+)
+```
+```{r}
+v23 <- load_variables(2022, "acs5", cache = TRUE)
+```
+
+```{r}
+hi_snap_2022_acs5 <- get_acs(
+  state = "HI",
+  county = "Honolulu",
+  geography = "tract",
+  variables = "B99221_001",
+  geometry = TRUE,
+  year = 2022
+)
+```
+
+```{r}
+hi_snap_2022_acs5 %>%
+  ggplot(aes(fill = estimate)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma") +
+  coord_sf(xlim = c(-158.3, -157.6), ylim = c(21.2, 21.8))
+
+```
+
