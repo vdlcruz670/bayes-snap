@@ -1,0 +1,179 @@
+---
+title: "code"
+author: "Victoria DelaCruz"
+date: "2024-11-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+ 
+# Libraries
+```{r}
+library(tidycensus)
+library(bayesrules)
+library(tidyverse)
+library(janitor)
+```
+
+# Tidycensus
+```{r}
+v16 <- load_variables(2016, "acs5", cache = TRUE)
+v16
+```
+
+```{r}
+snap_2023 <- get_acs(
+  geography = "state", 
+  table = "B22001", 
+  survey = "acs1",
+  year = 2023,
+  output = "wide"
+)
+```
+```{r}
+hi_snap_2020_acs5 <-get_acs(
+  geography = "county",
+  state = "Hawaii",
+  variables = c(medinc = "B19013_001",
+                medage = "B01002_001"),
+  year = 2020
+)
+```
+```{r}
+snap_2023 <- get_acs(
+  geography = "state",
+  state = "Hawaii",
+  table = "S2201", 
+  survey = "acs1",
+  year = 2023
+)
+```
+```{r}
+v23 <- load_variables(2022, "acs5", cache = TRUE)
+```
+
+```{r}
+hi_snap_2022_acs5 <- get_acs(
+  state = "HI",
+  county = "Honolulu",
+  geography = "tract",
+  variables = "B99221_001",
+  geometry = TRUE,
+  year = 2022
+)
+```
+
+```{r}
+hi_snap_2022_acs5 %>%
+  ggplot(aes(fill = estimate)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma") +
+  coord_sf(xlim = c(-158.3, -157.6), ylim = c(21.2, 21.8))
+
+```
+
+
+
+# Tidycensus api
+```{r}
+census_api_key("3919216fe49fe6bb05655cd8ed18f6f24bd21090")
+
+readRenviron("~/.Renviron")
+```
+
+```{r}
+vars <- load_variables(2022, "acs5/subject", cache = TRUE)
+vars
+```
+```{r}
+snap_data<- read_csv("/Users/victoriadelacruz/Desktop/R/Projects/bayes-snap/data/snapdata_2022.csv")
+```
+
+```{r}
+head(snap_data)
+```
+
+```{r}
+hi_data <- get_acs(
+  geography = "tract",
+  table = "S2201",
+  year = 2022,
+  survey = "acs5",
+  state = "HI", 
+  output = "wide",
+  cache_table = TRUE
+)
+```
+
+
+# Data Cleaning
+```{r}
+snap_clean <- clean_names(snap_data)
+```
+
+```{r}
+colnames(snap_clean)
+```
+```{r}
+snap_clean <- snap_clean %>% select(-ends_with("error"))
+```
+
+```{r}
+colnames(snap_clean)
+```
+
+```{r}
+snap_transposed <- snap_clean %>% 
+ column_to_rownames("label_grouping") %>% 
+  t() %>% 
+  as.data.frame()
+```
+```{r}
+snap_clean$label_grouping
+```
+
+```{r}
+library(dplyr)
+
+# Function to manually create labels based on specific conditions
+label_manually <- function(df, category_column) {
+  df <- df %>%
+    mutate(new_labels = case_when(
+      grepl("Households", !!sym(category_column)) ~ "Households",  # Top level
+      grepl("With one or more people in the household", !!sym(category_column)) ~ "Households - With one or more people in the household",
+      grepl("HOUSEHOLD TYPE", !!sym(category_column)) ~ "HOUSEHOLD TYPE",
+      grepl("Married-couple family", !!sym(category_column)) ~ "HOUSEHOLD TYPE - Married-couple family",
+      grepl("Other family:", !!sym(category_column)) ~ "HOUSEHOLD TYPE - Other family:",
+      grepl("Male householder, no spouse present", !!sym(category_column)) ~ "HOUSEHOLD TYPE - Other family: - Male householder, no spouse present",
+      grepl("Female householder, no spouse present", !!sym(category_column)) ~ "HOUSEHOLD TYPE - Other family: - Female householder, no spouse present",
+      grepl("Nonfamily households", !!sym(category_column)) ~ "HOUSEHOLD TYPE - Nonfamily households",
+      TRUE ~ trimws(!!sym(category_column))  # Retain the original category if no match
+    ))
+  return(df)
+}
+
+# Apply the function to your data frame
+df_labeled <- label_manually(snap_clean, "label_grouping")
+
+# View the updated data frame with the new labels
+head(df_labeled)
+
+```
+
+# Data Downloaded - Transposed & Final
+```{r}
+snap_data_transposed <- read_csv("/Users/victoriadelacruz/Desktop/R/Projects/bayes-snap/data/snsapdata_transposed.csv")
+```
+```{r}
+snap_data_final <- read_csv("/Users/victoriadelacruz/Desktop/R/Projects/bayes-snap/data/snapdata_final.csv")
+```
+
+## Data Cleaning
+```{r}
+snap_data_transposed <- clean_names(snap_data_transposed)
+```
+
+
+
