@@ -32,6 +32,7 @@ snap_2023 <- get_acs(
   output = "wide"
 )
 ```
+
 ```{r}
 hi_snap_2020_acs5 <-get_acs(
   geography = "county",
@@ -41,6 +42,7 @@ hi_snap_2020_acs5 <-get_acs(
   year = 2020
 )
 ```
+
 ```{r}
 snap_2023 <- get_acs(
   geography = "state",
@@ -50,30 +52,54 @@ snap_2023 <- get_acs(
   year = 2023
 )
 ```
+
 ```{r}
 v23 <- load_variables(2022, "acs5", cache = TRUE)
 ```
 
 ```{r}
+census_api_key("06f9dcf5172cd1b403f9a6c34beea0d7929604f3")
+```
+
+
+```{r}
 hi_snap_2022_acs5 <- get_acs(
   state = "HI",
-  county = "Honolulu",
+  #county = "Honolulu",
   geography = "tract",
   variables = "B99221_001",
   geometry = TRUE,
   year = 2022
-)
+) %>% 
+  filter(GEOID != "15003981200")
 ```
 
 ```{r}
 hi_snap_2022_acs5 %>%
   ggplot(aes(fill = estimate)) + 
   geom_sf(color = NA) + 
-  scale_fill_viridis_c(option = "magma") +
-  coord_sf(xlim = c(-158.3, -157.6), ylim = c(21.2, 21.8))
+  scale_fill_viridis_c(option = "magma")
+ #coord_sf(xlim = c(-165.3, -157.6), ylim = c(21.2, 21.8))
 
 ```
 
+# use percentages
+
+```{r}
+library(ggiraph)
+
+# Create an interactive map
+interactive_map <- hi_snap_2022_acs5 %>%
+  ggplot() +
+  geom_sf_interactive(aes(fill = estimate, tooltip = paste("Estimate:", estimate)), color = NA) +
+  scale_fill_viridis_c(option = "magma") +
+  theme_minimal()
+
+# Render the interactive map
+girafe(ggobj = interactive_map)
+
+
+```
 
 
 # Tidycensus api
@@ -172,8 +198,18 @@ snap_data_final <- read_csv("/Users/victoriadelacruz/Desktop/R/Projects/bayes-sn
 
 ## Data Cleaning
 ```{r}
-snap_data_transposed <- clean_names(snap_data_transposed)
+snap_data_final <- snap_data_final %>% row_to_names(row_number = 1)
 ```
 
+```{r}
+snap_data <- clean_names(snap_data_final)
+```
 
+```{r}
+colnames(snap_data)
+```
+
+```{r}
+snap_data_clean <- snap_data %>% select(geography, geographic_area_name, starts_with("estimate_percent"))
+```
 
