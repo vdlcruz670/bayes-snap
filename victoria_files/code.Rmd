@@ -134,64 +134,8 @@ hi_data <- get_acs(
 ```
 
 
-# Data Cleaning
-```{r}
-snap_clean <- clean_names(snap_data)
-```
 
-```{r}
-colnames(snap_clean)
-```
-```{r}
-snap_clean <- snap_clean %>% select(-ends_with("error"))
-```
-
-```{r}
-colnames(snap_clean)
-```
-
-```{r}
-snap_transposed <- snap_clean %>% 
- column_to_rownames("label_grouping") %>% 
-  t() %>% 
-  as.data.frame()
-```
-```{r}
-snap_clean$label_grouping
-```
-
-```{r}
-library(dplyr)
-
-# Function to manually create labels based on specific conditions
-label_manually <- function(df, category_column) {
-  df <- df %>%
-    mutate(new_labels = case_when(
-      grepl("Households", !!sym(category_column)) ~ "Households",  # Top level
-      grepl("With one or more people in the household", !!sym(category_column)) ~ "Households - With one or more people in the household",
-      grepl("HOUSEHOLD TYPE", !!sym(category_column)) ~ "HOUSEHOLD TYPE",
-      grepl("Married-couple family", !!sym(category_column)) ~ "HOUSEHOLD TYPE - Married-couple family",
-      grepl("Other family:", !!sym(category_column)) ~ "HOUSEHOLD TYPE - Other family:",
-      grepl("Male householder, no spouse present", !!sym(category_column)) ~ "HOUSEHOLD TYPE - Other family: - Male householder, no spouse present",
-      grepl("Female householder, no spouse present", !!sym(category_column)) ~ "HOUSEHOLD TYPE - Other family: - Female householder, no spouse present",
-      grepl("Nonfamily households", !!sym(category_column)) ~ "HOUSEHOLD TYPE - Nonfamily households",
-      TRUE ~ trimws(!!sym(category_column))  # Retain the original category if no match
-    ))
-  return(df)
-}
-
-# Apply the function to your data frame
-df_labeled <- label_manually(snap_clean, "label_grouping")
-
-# View the updated data frame with the new labels
-head(df_labeled)
-
-```
-
-# Data Downloaded - Transposed & Final
-```{r}
-snap_data_transposed <- read_csv("/Users/victoriadelacruz/Desktop/R/Projects/bayes-snap/data/snsapdata_transposed.csv")
-```
+# Data  - final!! FRFR
 ```{r}
 snap_data_final <- read_csv("/Users/victoriadelacruz/Desktop/R/Projects/bayes-snap/data/snapdata_final.csv")
 ```
@@ -213,3 +157,23 @@ colnames(snap_data)
 snap_data_clean <- snap_data %>% select(geography, geographic_area_name, starts_with("estimate_percent"))
 ```
 
+```{r}
+colnames(snap_data_clean)
+```
+```{r}
+snap_data_clean <- snap_data_clean %>% select(-starts_with("estimate_percent_households_receiving_food_stamps_snap"))
+```
+
+```{r}
+snap_data_clean <- snap_data_clean %>% select(-starts_with("estimate_percent_households_not_receiving_food_stamps_snap"))
+```
+
+```{r}
+snap_col <- snap_data %>% select(c("geography", "geographic_area_name", "estimate_percent_households_receiving_food_stamps_snap_households", "estimate_percent_households_not_receiving_food_stamps_snap_households"))
+```
+
+```{r}
+col <- data.frame(colnames(snap_data_clean))
+```
+
+# BAYES
