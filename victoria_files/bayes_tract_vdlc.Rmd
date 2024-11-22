@@ -139,6 +139,14 @@ chains = 4, iter = 5000*2, seed = 84735)
 ```{r}
 summary(log_model)
 ```
+
+Let's try using our model to make a prediction based on new predictor data. Below we're telling our model to make a posterior prediction based on this new data of a hypothetical census tract:
+- estimate_percent_households_no_children_under_18_years = 70.5
+- estimate_percent_households_married_couple_family = 20.3
+- estimate_percent_households_poverty_status_in_the_past_12_months_below_poverty_level = 30.8
+- estimate_percent_households_disability_status_with_one_or_more_people_with_a_disability = 10.4
+- estimate_percent_work_status_families_no_workers_in_past_12_months = 60.4
+
 ```{r}
 binary_prediction <- posterior_predict(
   log_model, newdata = data.frame(estimate_percent_households_no_children_under_18_years = 70.5, 
@@ -152,9 +160,12 @@ binary_prediction <- posterior_predict(
 table(binary_prediction)
 ```
 
+Basically the function looked at 20000 SNAP outcome, 0 being not a high SNAP rate and 1 being a high SNAP rate. Based on new predictor data, it was majority predicted as high snap rate. 
 ```{r}
 colMeans(binary_prediction)
 ```
+
+So the average probability with this new data that it's a high snap rate, so a 74% chance! 
 
 # Model Evaluation
 
