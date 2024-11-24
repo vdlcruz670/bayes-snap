@@ -4,20 +4,20 @@ format: html
 editor: visual
 ---
 
-## Libraries
-
 ```{r}
 library(tidycensus)
 library(dplyr)
 library(bayesrules)
 library(tidyverse)
-library(brms)
 library(janitor)
+library(brms) # for model
 library(plotly)
 library(naniar)
 library(rstanarm)
+library(ggplot2)
 library(broom.mixed)
 library(ggiraph) # For the map
+library(bayesplot)
 ```
 
 # Creating Data Sets
@@ -91,42 +91,80 @@ hi_snap_2022_acs5 <- get_acs(state = "HI",
                              geometry = TRUE,
                              survey = "acs5",
                              year = 2022) %>%
-  filter(GEOID != "15003981200") %>%
-  filter(variable %in% c("snap_rate", "percent_population")) #%>%
- # population <- filter(variable == "snap_rate")
-
+  filter(GEOID != "15003981200")
 ```
 
 # Graphs
+
+### Median SNAP rate for our data set
+
+```{r}
+# Calculate the median of the snap_rateE variable
+median_snap_rate <- median(census_data$snap_rateE, na.rm = TRUE)
+
+# Print the median snap rate
+print(median_snap_rate)
+```
+
+### Basic plot
+
+```{r}
+income_snap_plot <- hi_snap_2022_acs5 %>%
+  filter(variable %in% c("snap_rate", "percent_disability")) %>%
+  pivot_wider(names_from = variable, values_from = estimate) %>%
+  ggplot(aes(x = percent_disability, y = snap_rate)) +
+  geom_point(alpha = 0.7, color = "blue") +
+  xlim(0,100) +
+  ylim(0,100) +
+  #geom_smooth(method = "lm", color = "red", se = FALSE) +
+  theme_minimal() +
+  labs(title = "Relationship Between Median Income and SNAP Rates",
+       x = "Median Income (USD)",
+       y = "SNAP Rate (%)")
+
+income_snap_plot
+```
+
+### Highest SNAP rates according to tract
+
+```{r}
+top_snap_tracts <- hi_snap_2022_acs5 %>%
+  filter(variable == "snap_rate") %>%
+  arrange(desc(estimate)) %>%
+  slice_head(n = 10) %>%
+  mutate(NAME = reorder(NAME, estimate))
+
+top_snap_chart <- ggplot(top_snap_tracts, aes(x = estimate, y = NAME)) +
+  geom_col(fill = "lightblue") +
+  theme_minimal() +
+  labs(title = "Top 10 Census Tracts with Highest SNAP Rates",
+       x = "SNAP Rate (%)",
+       y = "Census Tract")
+
+top_snap_chart
+```
 
 ### Mapping
 
 ```{r}
 hi_snap_2022_acs5 %>%
+  filter(variable == "snap_rate") %>%
   ggplot(aes(fill = estimate)) + 
   geom_sf(color = NA) + 
-  scale_fill_viridis_c(option = "magma")
+  scale_fill_viridis_c(option = "turbo")
 ```
 
 ```{r}
-# Interactive map
+# Interactive map for SNAP RATE
 interactive_map <- hi_snap_2022_acs5 %>%
-  ggplot() +
-  geom_sf_interactive(aes(fill = estimate,
-                          tooltip = paste("Snap Rate:", estimate,
-                                          "Population:", percent_population),
-                          color = NA) +
+    filter(variable == "snap_rate") %>%
+    ggplot() +
+    geom_sf_interactive(aes(fill = estimate,
+                          tooltip = paste("Snap Rate:", estimate)),
+                          color = NA ) +
                         scale_fill_viridis_c(option = "magma") +
                         theme_minimal()
-                      )
 
-# Interactive map
-interactive_map <- hi_snap_2022 %>%
-  ggplot() +
-  geom_sf_interactive(aes(fill = estimate, tooltip = paste("Estimate:", estimate)), color = NA) +
-  scale_fill_viridis_c(option = "magma") +
-  theme_minimal()
-  
 girafe(ggobj = interactive_map, 
        options = list(
          opts_hover(css = "fill:orange;stroke:black;cursor:pointer;"),
@@ -134,7 +172,25 @@ girafe(ggobj = interactive_map,
       ))
 ```
 
-# Model
+```{r}
+# Interactive map for POPULATION
+interactive_map_2 <- hi_snap_2022_acs5 %>%
+    filter(variable == "percent_population") %>%
+    ggplot() +
+    geom_sf_interactive(aes(fill = estimate,
+                          tooltip = paste("Population %:", estimate)),
+                          color = NA ) +
+                        scale_fill_viridis_c(option = "magma") +
+                        theme_minimal()
+
+girafe(ggobj = interactive_map_2, 
+       options = list(
+         opts_hover(css = "fill:orange;stroke:black;cursor:pointer;"),
+         opts_zoom(min = 0.5, max = 30)
+      ))
+```
+
+# Linear Regression Model
 
 ```{r}
 # Bayesian Model using brms
@@ -150,11 +206,38 @@ bayesian_model <- brm(
   ),
   chains = 4, iter = 4000, seed = 123
 )
+```
 
+```{r}
 # Model Summary
 summary(bayesian_model)
 
 # Posterior Predictions and Plots
 posterior <- posterior_samples(bayesian_model)
 plot(bayesian_model)
+```
+
+### Coefficients with Confidence Intervals
+
+```{r}
+# Tidy the model output using broom.mixed
+tidy_bayes_model <- broom.mixed::tidy(bayesian_model)
+
+ggplot(tidy_bayes_model, aes(x = term, y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error)) +
+  coord_flip() +
+  labs(title = "Model Coefficients with Confidence Intervals",
+       x = "Predictors", y = "Estimated Coefficient") +
+  theme_minimal()
+```
+
+### Posterior Distribution of the Predictors
+
+```{r}
+plot(bayesian_model)
+```
+
+```{r}
+pp_check(bayesian_model)
 ```
