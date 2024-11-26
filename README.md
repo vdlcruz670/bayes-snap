@@ -48,8 +48,9 @@ Code snippets include fetching ACS data, processing it, and building Bayesian mo
 
 
 ## Plot Previews
-<img src= "Figure_images/Dotplot.png" width="350"> <img src= "Figure_images/Top10CensusTracts.png" width="300">  <img src= "Figure_images/Snap_map.png" width="350"> <br/>
-<img src= "Figure_images/Posterior_distribution_1.png" width="300"> &nbsp;&nbsp;&nbsp;&nbsp; <img src= "Figure_images/Model_coefficients.png" width="300"> <img src= "Figure_images/Model_vs_data.png" width="300"> <br/>
-<img src= "Figure_images/Posterior_distribution_2.png" width="300">
+<img src= "Figure_images/Dotplot.png" width="350"> <br/>
+<img src= "Figure_images/Top10CensusTracts.png" width="300"> <img src= "Figure_images/Snap_map.png" width="350"> <br/>
+<img src= "Figure_images/Model_coefficients.png" width="300"> <img src= "Figure_images/Model_vs_data.png" width="300"> <br/>
+<img src= "Figure_images/Posterior_distribution_1.png" width="300"> <img src= "Figure_images/Posterior_distribution_2.png" width="300">
 
 
