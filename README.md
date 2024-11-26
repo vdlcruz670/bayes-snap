@@ -1,4 +1,5 @@
-# Bayes-snap <img src="https://raw.githubusercontent.com/aemmadi/aemmadi/master/wave.gif" width="30">
+# The relationships between snap participation and other socioeconomic variables at the census tract level
+ <img src="https://raw.githubusercontent.com/aemmadi/aemmadi/master/wave.gif" width="30">
 
 [![R](https://img.shields.io/badge/R-276DC3?style=for-the-badge)](https://www.r-project.org/)
 #### Using data from R's Tidycensus package, we created visuals to explore the relationships between SNAP participation and other socioeconomic variables at the census tract level. We utilized a linear regression model to analyze the correlation between SNAP % and our chosen predictors.
