@@ -7,25 +7,15 @@ output: html_document
 
 # Notes
 
+------------------------------------------------------------------------
+
 -   Data comes from *United States Census Bureau*
 
 -   ACS = American Community Survey
 
 -   we could talk about race since the data is there, but honestly that's too fragile of a topic 
 
-## Interest Tables
-
-|  |  |  |  |  |
-|---------------|---------------|---------------|---------------|---------------|
-| Table Code |  | **Households that receive snap** |  | Table Code |
-| S2201_C03_004 | Married | Vs | Non-married | S2201_C03_005 |
-| S2201_C03_007 | Female (no spouse) | Vs | Male (no spouse) | S2201_C03_006 |
-
-|  |  |  |  |  |
-|---------------|---------------|---------------|---------------|---------------|
-| Table Code |  | **Households that don’t receive snap** |  | Table Code |
-| S2201_C05_004 | Married  | Vs | Non-married | S2201_C05_005 |
-| S2201_C05_007 | Female (no spouse) | Vs | Male (no spouse) | S2201_C05_006 |
+## Interest Table
 
 |  |  |  |  |  |
 |---------------|---------------|---------------|---------------|---------------|
@@ -34,27 +24,34 @@ output: html_document
 
 # Code
 
+------------------------------------------------------------------------
+
 ## Libraries
 
 ```{r}
 library(tidyverse)
 library(tidycensus)
 library(ggplot2)
+library(ggiraph) #interactive map
 ```
 
-## Loading variables
-
-```{r}
-acs5 <- load_variables(2022, "acs5", cache = TRUE)
-View(acs5)
-```
-
-## Loading Data "S2201"
+## Loading Data & Variables
 
 [*Food Stamps/Supplemental Nutrition Assistance Program (SNAP)*](https://data.census.gov/table/ACSST5Y2022.S2201?q=snap%20acs5%20in%20Hawaii)
 
 ```{r}
-# Loads data into a data frame
+#> Load API key
+census_api_key("06f9dcf5172cd1b403f9a6c34beea0d7929604f3")
+```
+
+```{r}
+# Looking at variables
+acs5 <- load_variables(2022, "acs5", cache = TRUE)
+#View(acs5)
+```
+
+```{r}
+#> Create S2201 ACS5 data set
 snap_2022 <- get_acs(geography = "tract",
                      state = "HI", 
                      table = "S2201", 
@@ -62,14 +59,28 @@ snap_2022 <- get_acs(geography = "tract",
                      year = 2022,
                      output = "wide",
                      cache = TRUE)
-View(snap_2022)
+
+#View(snap_2022)
 ```
 
 ```{r}
-snap_data <- read.csv("snapdata_final.csv")
+#> Create data set
+hi_snap_2022 <- get_acs(state = "HI", 
+                             geography = "tract", 
+                             variables = "B99221_001", 
+                             geometry = TRUE, 
+                             year = 2022) %>%
+  filter(GEOID != "15003981200")
+
+#View(hi_snap_2022_acs5)
 ```
 
-## Filtering Data
+```{r}
+#> Manually read in data set
+snap_data <- read_csv("/Users/Cadeo/Documents/DS400 FA24/bayes-snap/bayes-snap/snapdata_final.csv")
+```
+
+## Cleaning Data
 
 ```{r}
 columns <- c("NAME", OTHER COLUMNS)
@@ -79,14 +90,53 @@ data <- select(snap_2022, columns)
 
 # Plotting
 
-find important variables to use when we create a new data set.
+------------------------------------------------------------------------
 
 ```{r}
-ggplot(snap_2023, aes(S2201_C03_007E, S2201_C03_006E)) +
+# Dot plot
+ggplot(snap_2022, aes(S2201_C03_007E, S2201_C03_006E)) +
   geom_point() +
   labs(title = "Female vs Male households that recieve snap (no spouse)",
        x = "Female", 
        y = "Male")
 ```
 
-# Bayes
+```{r}
+# Bar chart
+ggplot(snap_2022, aes(S2201_C03_007E, S2201_C03_006E, fill = S2201_C03_006E)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Stacked Bar Chart", x = "Category", y = "Value") +
+  theme_minimal()
+```
+
+```{r}
+# Mapping snap 
+hi_snap_2022 %>%
+  ggplot(aes(fill = estimate)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma")
+ #coord_sf(xlim = c(-165.3, -157.6), ylim = c(21.2, 21.8))
+```
+
+```{r}
+library(ggiraph)
+# Interactive map
+interactive_map <- hi_snap_2022 %>%
+  ggplot() +
+  geom_sf_interactive(aes(fill = estimate, tooltip = paste("Estimate:", estimate)), color = NA) +
+  scale_fill_viridis_c(option = "magma") +
+  theme_minimal()
+
+# Render the interactive map
+girafe(ggobj = interactive_map, 
+       options = list(
+         opts_hover(css = "fill:orange;stroke:black;cursor:pointer;"),
+         opts_zoom(min = 0.5, max = 30)
+       ))
+```
+
+# Bayes Linear Regression Model
+
+------------------------------------------------------------------------
+
+STUFF !
