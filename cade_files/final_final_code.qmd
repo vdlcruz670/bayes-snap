@@ -4,6 +4,8 @@ format: html
 editor: visual
 ---
 
+# Libraries
+
 ```{r}
 library(tidycensus)
 library(dplyr)
@@ -25,8 +27,8 @@ library(bayesplot)
 ### Viewing ALL variables
 
 ```{r}
-var <- load_variables(2022, "acs5", cache = TRUE)
-View(var)
+# var <- load_variables(2022, "acs5", cache = TRUE)
+# View(var)
 ```
 
 ### Data set for model
@@ -110,9 +112,10 @@ print(median_snap_rate)
 
 ```{r}
 income_snap_plot <- hi_snap_2022_acs5 %>%
-  filter(variable %in% c("snap_rate", "percent_disability")) %>%
-  pivot_wider(names_from = variable, values_from = estimate) %>%
-  ggplot(aes(x = percent_disability, y = snap_rate)) +
+   pivot_wider(id_cols = c("NAME", "GEOID", "geometry"), names_from = variable, values_from = estimate) 
+  
+library(ggpubr)
+ggplot(data = income_snap_plot, aes(x = percent_disability, y = snap_rate)) +
   geom_point(alpha = 0.7, color = "blue") +
   xlim(0,100) +
   ylim(0,100) +
@@ -120,9 +123,9 @@ income_snap_plot <- hi_snap_2022_acs5 %>%
   theme_minimal() +
   labs(title = "Relationship Between Median Income and SNAP Rates",
        x = "Median Income (USD)",
-       y = "SNAP Rate (%)")
-
-income_snap_plot
+       y = "SNAP Rate (%)") +
+  geom_smooth(method = "lm") +
+  stat_cor()
 ```
 
 ### Highest SNAP rates according to tract
@@ -135,7 +138,7 @@ top_snap_tracts <- hi_snap_2022_acs5 %>%
   mutate(NAME = reorder(NAME, estimate))
 
 top_snap_chart <- ggplot(top_snap_tracts, aes(x = estimate, y = NAME)) +
-  geom_col(fill = "lightblue") +
+  geom_col(fill = "purple") +
   theme_minimal() +
   labs(title = "Top 10 Census Tracts with Highest SNAP Rates",
        x = "SNAP Rate (%)",
@@ -178,7 +181,7 @@ interactive_map_2 <- hi_snap_2022_acs5 %>%
     filter(variable == "percent_population") %>%
     ggplot() +
     geom_sf_interactive(aes(fill = estimate,
-                          tooltip = paste("Population %:", estimate)),
+                          tooltip = paste("Population:", estimate)),
                           color = NA ) +
                         scale_fill_viridis_c(option = "magma") +
                         theme_minimal()
@@ -211,13 +214,7 @@ bayesian_model <- brm(
 ```{r}
 # Model Summary
 summary(bayesian_model)
-
-# Posterior Predictions and Plots
-posterior <- posterior_samples(bayesian_model)
-plot(bayesian_model)
 ```
-
-### Coefficients with Confidence Intervals
 
 ```{r}
 # Tidy the model output using broom.mixed
@@ -237,6 +234,8 @@ ggplot(tidy_bayes_model, aes(x = term, y = estimate)) +
 ```{r}
 plot(bayesian_model)
 ```
+
+### Comparing the model to the data set
 
 ```{r}
 pp_check(bayesian_model)
