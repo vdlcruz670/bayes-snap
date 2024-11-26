@@ -20,6 +20,9 @@
 ## Description
 Using data from R's Tidycensus package, we created visuals to explore the relationships between SNAP participation and other socioeconomic variables at the census tract level. We utilized a linear regression model to analyze the correlation between SNAP % and our chosen predictors.
 
+## Summary of Findings
+Given the parameters of this project, we found a lot of issues with using tracts as the main source of data. Otherwise, correlation coefficients were statistically significant between SNAP estimates and our 8 chosen variables. Our linear regression model was able to provide significant results shown in the plots.
+
 ## Data
 The dataset for this project includes:
 
